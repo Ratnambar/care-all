@@ -1,6 +1,9 @@
 from django.contrib.auth import get_user_model
+from django.db import models
+from django.db.models import fields
+from django.http import request
 from rest_framework import serializers
-from accounts.models import Profile
+from accounts.models import Comments, Profile
 from django.contrib.auth.password_validation import validate_password
 from rest_framework.serializers import ModelSerializer, Serializer
 
@@ -44,3 +47,18 @@ class UserSerializer(ModelSerializer):
 	class Meta:
 		model = get_user_model()
 		fields = ['id','username','email','profile','care_taker','friends']
+
+
+class ChangePasswordSerializer(serializers.Serializer):
+    old_password = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True)
+
+
+class CommentSerializer(ModelSerializer):
+	class Meta:
+		model = Comments
+		fields = ['comment_from_user','comment_to_user','comment','parent','timestamp']
+	
+
+	def create(self, validated_data):
+		return Comments.objects.create(**validated_data)
