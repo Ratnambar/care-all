@@ -9,8 +9,6 @@ https://docs.djangoproject.com/en/3.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.2/ref/settings/
 """
-import django_heroku
-from logging import DEBUG
 from pathlib import Path
 import os
 from datetime import timedelta
@@ -23,12 +21,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get("SECRET_KEY")
+SECRET_KEY = 'django-insecure-8j*8io!=%sw@&+%6vqiej-g=h-=jpauqp-##q8e9^5j923mf^q'
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
-# DEBUG = True
+# DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
 # ALLOWED_HOSTS = []
@@ -46,6 +44,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'accounts',
     'rest_framework.authtoken',
+    'django_rest_passwordreset',
 ]
 
 MIDDLEWARE = [
@@ -64,7 +63,7 @@ ROOT_URLCONF = 'care.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR, 'templates/',],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -142,6 +141,14 @@ REST_FRAMEWORK = {
     ]
 }
 
+DJANGO_REST_PASSWORDRESET_TOKEN_CONFIG = {
+    "CLASS": "django_rest_passwordreset.tokens.RandomStringTokenGenerator",
+    "OPTIONS": {
+        "min_length": 20,
+        "max_length": 30
+    }
+}
+
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
@@ -150,6 +157,10 @@ SIMPLE_JWT = {
 }
 
 
-
-
-django_heroku.settings(locals())
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_USE_TLS = False
+EMAIL_PORT = 587
+EMAIL_USE_SSL = True
+EMAIL_HOST_USER = 'cvctest51@gmail.com'
+EMAIL_HOST_PASSWORD = 'foutrqtasjjdgehv'

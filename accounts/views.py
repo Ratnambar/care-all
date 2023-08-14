@@ -6,7 +6,7 @@ from rest_framework import mixins, serializers, viewsets
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from accounts.models import Friend_Request, MyUser, Profile, Comments
-from accounts.serializers import SignupSerializer, LoginSerializer,UserSerializer,UserProfileSerializer,ChangePasswordSerializer,CommentSerializer
+from accounts.serializers import SignupSerializer, LoginSerializer,UserSerializer,UserProfileSerializer,ForgotPasswordSerializer,ResetPasswordEmailSerializer,ChangePasswordSerializer,CommentSerializer
 from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
@@ -16,6 +16,66 @@ from rest_framework.views import APIView
 from rest_framework.decorators import permission_classes,api_view,authentication_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
+from django.core.exceptions import ObjectDoesNotExist
+import random
+from django.core.mail import send_mail
+from django.contrib.auth.tokens import PasswordResetTokenGenerator
+from django.urls import reverse
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+from django.contrib.auth import update_session_auth_hash
+
+
+
+# global otp
+# otp = random.randint(1000, 9999)
+
+
+
+def verify_email(email):
+	try:
+		email = MyUser.objects.get(email=email)
+	except Exception:
+		return False
+	else:
+		return True
+
+
+def send_email(email):
+	if verify_email(email):
+		try:
+			send_mail(
+				"Registration on my website.",
+				"Congratulations !. You have successfully registered.",
+				"cvctest51@gmail.com",
+				[email],
+				fail_silently=False,
+			)
+		except Exception:
+			return Response({"message": "email couldn't send."})
+		else:
+			return Response({"message": "Email sent. !"})
+	return Response({"message": "Email is not registered."})
+	
+
+
+
+
+
+
+# def send_otp(email, otp):
+# 	try:
+# 		send_mail(
+# 			"Registration on my website.",
+# 			f"<p>Your OTP for forgot password is : {globals()['otp']}</p>",
+# 			"cvctest51@gmail.com",
+# 			[email],
+# 			fail_silently=False,
+# 		)
+# 	except:
+# 		return Response({"message": "email couldn't send."})
+	
+
 
 
 # Signup view
@@ -37,11 +97,12 @@ class UserView(generics.ListAPIView):
 	queryset = MyUser.objects.all()
 	serializer_class = UserSerializer
 
+
 # Login view.
 class LoginView(APIView):
 	permission_classes = [AllowAny]
 
-	def post(self,request):
+	def post(self,request):  # sourcery skip: raise-from-previous-error
 		serializer = LoginSerializer(data=request.data)
 		if serializer.is_valid():
 			try:
@@ -84,6 +145,66 @@ def send_friend_request(request,userID):
 			else:
 				return Response({'message':'Friend request has already sent.'})
 
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def user_signup(request):
+	user = request.data
+	email = request.data.get('email')
+	print(email)
+	try:
+		email = MyUser.objects.get(email=request.data.get('email'))
+	except Exception:
+		serializer = SignupSerializer(data=request.data)
+		if serializer.is_valid():
+			send_email(request.data.get('email'))
+			serializer.save()
+			return Response({"message": "user created successfully."})
+		return Response({"message": serializer.errors})
+	return Response({"message":"Email is already registered."})
+
+
+@api_view(['POST'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def forgot_password(request):
+	serializer = ForgotPasswordSerializer(data=request.data)
+	if serializer.is_valid():
+		user = request.user
+		if user.check_password(serializer.data.get('old_password')):
+			user.set_password(serializer.data.get('new_password'))
+			user.save()
+			update_session_auth_hash(request, user)
+			return Response({"message": "Password changed successfully."})
+		return Response({"message": "Incorrect old password."})
+	return Response({"message": serializer.errors})
+	# print(request.user, request.data.get('email'))
+	# user = request.user
+	# email = request.data.get('email')
+	# token = Token.objects.get(user=user)
+	# if token:
+	# 	send_email(email)
+	# 	return Response({"message": "Password reset link has been sent to your email."})
+	# return Response({"message": "Token not found."})
+# 	try:
+# 		fetch_email = MyUser.objects.get(email=request.data.get('email'))
+# 	except Exception:
+# 		return Response({"message": "This email not found.Please enter registered email address."})
+# 	else:
+# 		# print(request.user)
+# 		token = Token.objects.filter(user=request.user.id).first()
+		
+# 		return Response({"message": "Okay"})
+		# send_email(request.data.get('email'), globals()['otp'])
+
+
+# @api_view(['POST'])
+# def verify_otp(request):
+# 	if int(request.data.get('otp')) == int(globals()['otp']):
+# 		return Response({"message": "otp verified."})
+# 	return Response({"message": "otp not verified."})
+            
 
 
 # Request accept view.
