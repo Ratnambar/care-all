@@ -8,6 +8,7 @@ from django.contrib.auth.password_validation import validate_password
 from rest_framework.serializers import ModelSerializer, Serializer
 
 
+
 class SignupSerializer(ModelSerializer):
 	class Meta:
 		model = get_user_model()
@@ -16,11 +17,9 @@ class SignupSerializer(ModelSerializer):
 			'password':{'write_only':True}
 		}
 
-
 	def validate_password(self,value):
 		validate_password(value)
 		return value
-
 
 	def create(self,validate_data):
 		user = get_user_model()(**validate_data)
@@ -29,17 +28,34 @@ class SignupSerializer(ModelSerializer):
 		return user
 
 
-
 class LoginSerializer(Serializer):
 	username = serializers.CharField(required=True)
 	password = serializers.CharField(required=True)
+
+
+
+
+class ForgotPasswordSerializer(Serializer):
+	old_password = serializers.CharField(required=True)
+	new_password = serializers.CharField(required=True)
+
+
+class ResetPasswordEmailSerializer(Serializer):
+	email = serializers.EmailField(required=True)
+
+
+	# def validate_password(self, validated_data):
+	# 	password1 = validated_data['password1']
+	# 	password2 = validated_data['password2']
+	# 	if password1 != password2:
+
+
 
 
 class UserProfileSerializer(ModelSerializer):
 	class Meta:
 		model = Profile
 		fields = ['id','first_name','last_name','age','gender','contact','bio','address']
-
 
 
 class UserSerializer(ModelSerializer):
@@ -59,6 +75,5 @@ class CommentSerializer(ModelSerializer):
 		model = Comments
 		fields = ['comment_from_user','comment_to_user','comment','parent','timestamp']
 	
-
 	def create(self, validated_data):
 		return Comments.objects.create(**validated_data)
