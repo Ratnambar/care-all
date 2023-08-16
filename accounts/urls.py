@@ -3,14 +3,14 @@ from django.urls import include, path
 from rest_framework import routers
 from accounts.views import *
 # SignupViewSet, UserView, UserProfileView,LoginView,send_friend_request,accept_friend_request,cancel_friend_request,UpdatePasswordView,comments_view
-from django_rest_passwordreset.urls import add_reset_password_urls_to_router
+# from django_rest_passwordreset.urls import add_reset_password_urls_to_router
 from django_rest_passwordreset.views import *
 
 
 router = routers.DefaultRouter()
 router.register('signup', SignupViewSet),
 router.register(
-    'validate_token/',
+    'validate_token',
     ResetPasswordValidateTokenViewSet,
     basename='reset-password-validate'
 )
@@ -20,7 +20,7 @@ router.register(
     basename='reset-password-confirm'
 )
 router.register(
-    '/passwordreset/',
+    'passwordreset',
     ResetPasswordRequestTokenViewSet,
     basename='reset-password-request'
 )
@@ -36,8 +36,8 @@ urlpatterns=[
 	path('accept_request/<int:requestID>/', accept_friend_request, name='accept_request'),
 	path('cancel_request/<int:requestID>/',cancel_friend_request,name='cancel_request'),
 	# path('change_password/',UpdatePasswordView.as_view(),name="update_password"),
-	path('password/', forgot_password, name="password"),
-	path('api/password_reset/', include('django_rest_passwordreset.urls', namespace='password_reset')),
+	# path('password/', forgot_password, name="password"),
+	# path('api/password_reset/', include('django_rest_passwordreset.urls', namespace='password_reset')),
 	path('comment/<int:comment_to_userID>/', comments_view,name="comments_view")
 
 ]

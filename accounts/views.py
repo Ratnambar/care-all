@@ -1,29 +1,21 @@
-from re import A
-from django.contrib.auth import get_user_model
-from rest_framework.authtoken.views import ObtainAuthToken
 from rest_framework.authtoken.models import Token
-from rest_framework import mixins, serializers, viewsets
+from rest_framework import mixins, viewsets
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from accounts.models import Friend_Request, MyUser, Profile, Comments
-from accounts.serializers import SignupSerializer, LoginSerializer,UserSerializer,UserProfileSerializer,ForgotPasswordSerializer,ResetPasswordEmailSerializer,ChangePasswordSerializer,CommentSerializer
-from rest_framework.authtoken.views import ObtainAuthToken
+from accounts.serializers import SignupSerializer, LoginSerializer,UserSerializer,UserProfileSerializer \
+	,ForgotPasswordSerializer,ResetPasswordEmailSerializer,ChangePasswordSerializer,CommentSerializer
 from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
 from rest_framework import generics
-from rest_framework.authentication import SessionAuthentication, BasicAuthentication,TokenAuthentication
+from rest_framework.authentication import TokenAuthentication
 from rest_framework.views import APIView
 from rest_framework.decorators import permission_classes,api_view,authentication_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
-from django.core.exceptions import ObjectDoesNotExist
-import random
 from django.core.mail import send_mail
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
-from django.urls import reverse
-from django.utils.http import urlsafe_base64_encode
-from django.utils.encoding import force_bytes
-from django.contrib.auth import update_session_auth_hash
+
 
 
 
@@ -58,11 +50,6 @@ def send_email(email):
 	return Response({"message": "Email is not registered."})
 	
 
-
-
-
-
-
 # def send_otp(email, otp):
 # 	try:
 # 		send_mail(
@@ -76,19 +63,31 @@ def send_email(email):
 # 		return Response({"message": "email couldn't send."})
 	
 
-
-
 # Signup view
 class SignupViewSet(mixins.CreateModelMixin,viewsets.GenericViewSet):
-	permission_classes = [AllowAny]
 	queryset = MyUser.objects.all()
 	serializer_class = SignupSerializer
+	permission_classes = [AllowAny]
+
+	def create(self, request, *args, **kwargs):
+		try:
+			MyUser.objects.get(email=request.POST.get('email'))
+		except:
+			serializer = SignupSerializer(data=request.data)
+			if serializer.is_valid():
+				serializer.save()
+				send_email(request.POST.get('email'))
+				return Response({"message":"You have successfully registered."})
+			return Response({"message":serializer.errors})
+		return  Response({"message":"This email is already registered."})
+
 
 # User profile view
 class UserProfileView(generics.ListAPIView):
 	permission_classes = [AllowAny]
 	queryset = Profile.objects.all()
 	serializer_class = UserProfileSerializer
+
 
 # User view for nested view containg user and profile details.
 class UserView(generics.ListAPIView):
@@ -118,7 +117,6 @@ class LoginView(APIView):
 		return Response({'message':serializer.errors})
 
 
-
 # view for sending request.We are using id of the user to whom request
 #  to be send and current user id,who is sending request.
 @api_view(['POST'])
@@ -146,7 +144,6 @@ def send_friend_request(request,userID):
 				return Response({'message':'Friend request has already sent.'})
 
 
-
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def user_signup(request):
@@ -165,20 +162,20 @@ def user_signup(request):
 	return Response({"message":"Email is already registered."})
 
 
-@api_view(['POST'])
-@authentication_classes([TokenAuthentication])
-@permission_classes([IsAuthenticated])
-def forgot_password(request):
-	serializer = ForgotPasswordSerializer(data=request.data)
-	if serializer.is_valid():
-		user = request.user
-		if user.check_password(serializer.data.get('old_password')):
-			user.set_password(serializer.data.get('new_password'))
-			user.save()
-			update_session_auth_hash(request, user)
-			return Response({"message": "Password changed successfully."})
-		return Response({"message": "Incorrect old password."})
-	return Response({"message": serializer.errors})
+# @api_view(['POST'])
+# @authentication_classes([TokenAuthentication])
+# @permission_classes([IsAuthenticated])
+# def forgot_password(request):
+# 	serializer = ForgotPasswordSerializer(data=request.data)
+# 	if serializer.is_valid():
+# 		user = request.user
+# 		if user.check_password(serializer.data.get('old_password')):
+# 			user.set_password(serializer.data.get('new_password'))
+# 			user.save()
+# 			update_session_auth_hash(request, user)
+# 			return Response({"message": "Password changed successfully."})
+# 		return Response({"message": "Incorrect old password."})
+# 	return Response({"message": serializer.errors})
 	# print(request.user, request.data.get('email'))
 	# user = request.user
 	# email = request.data.get('email')
@@ -206,7 +203,6 @@ def forgot_password(request):
 # 	return Response({"message": "otp not verified."})
             
 
-
 # Request accept view.
 @api_view(['POST'])
 @authentication_classes([TokenAuthentication])
@@ -224,7 +220,6 @@ def accept_friend_request(request,requestID):
 	return Response({'message':'Request is not accepted.'})
 
 
-
 # View for canceling of friend request.
 @api_view(['POST'])
 @authentication_classes([TokenAuthentication])
@@ -237,7 +232,6 @@ def cancel_friend_request(request,requestID):
 	return Response({'message':'Friend request can not be cancel.'})
 
 
-
 # Simple view for changing user password.
 class UpdatePasswordView(APIView):
 	authentication_classes = [TokenAuthentication]
@@ -246,11 +240,9 @@ class UpdatePasswordView(APIView):
 	def get_object(self,queryset=None):
 		return self.request.user
 
-	
 	def put(self,request, *args, **kwargs):
 		self.object = self.get_object()
 		serializer = ChangePasswordSerializer(data=request.data)
-
 		if serializer.is_valid():
 			old_password = serializer.data.get('old_password')
 			if not self.object.check_password(old_password):
@@ -259,8 +251,6 @@ class UpdatePasswordView(APIView):
 			self.object.save()
 			return Response({'message':'password has been changed successfully.'},status=status.HTTP_201_CREATED)
 		return Response(serializer.errors,status=status.HTTP_400_BAD_REQUEST)
-
-
 
 
 @api_view(['POST'])
