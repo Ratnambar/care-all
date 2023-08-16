@@ -17,9 +17,18 @@ class SignupSerializer(ModelSerializer):
 			'password':{'write_only':True}
 		}
 
-	def validate_password(self,value):
-		validate_password(value)
-		return value
+	def validate(self, attrs):
+		if attrs['username'] == '':
+			raise serializers.ValidationError({"message":"Username field can't be blank."})
+		if attrs['email'] == '' or '@' not in attrs['email']:
+			raise serializers.ValidationError({"message":"Enter a valid email address."})
+		if attrs['password'] == '' or len(attrs['password']) < 8:
+			raise serializers.ValidationError({"message":"Password length should be greater than 8 characters."})
+		return super().validate(attrs)
+
+	# def validate_password(self,value):
+	# 	validate_password(value)
+	# 	return value
 
 	def create(self,validate_data):
 		user = get_user_model()(**validate_data)
