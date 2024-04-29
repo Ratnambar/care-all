@@ -69,8 +69,10 @@ class SignupViewSet(mixins.CreateModelMixin,viewsets.GenericViewSet):
 	serializer_class = SignupSerializer
 	permission_classes = [AllowAny]
 
+
 	def create(self, request, *args, **kwargs):
 		try:
+			
 			MyUser.objects.get(email=request.POST.get('email'))
 		except:
 			serializer = SignupSerializer(data=request.data)
@@ -95,6 +97,15 @@ class UserView(generics.ListAPIView):
 	permission_classes = [IsAuthenticated]
 	queryset = MyUser.objects.all()
 	serializer_class = UserSerializer
+
+	def list(self, request):
+		print(request.user.care_taker)
+		if request.user.care_taker:
+			users = MyUser.objects.exclude(care_taker=True).exclude(username='admin') # type: ignore
+		else:
+			users = MyUser.objects.exclude(care_taker=False).exclude(username='admin')
+		serializer = UserSerializer(users, many=True)
+		return Response({'current_user': serializer.data})
 
 
 # Login view.
