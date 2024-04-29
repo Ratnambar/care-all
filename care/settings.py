@@ -42,9 +42,10 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'accounts',
     'rest_framework.authtoken',
-    'django_rest_passwordreset',
+    'django_extensions',
+    'accounts',
+    # 'django_rest_passwordreset',
 ]
 
 MIDDLEWARE = [

@@ -2,28 +2,28 @@ from os import name
 from django.urls import include, path
 from rest_framework import routers
 from accounts.views import *
-# SignupViewSet, UserView, UserProfileView,LoginView,send_friend_request,accept_friend_request,cancel_friend_request,UpdatePasswordView,comments_view
+SignupViewSet, UserView, UserProfileView,LoginView,send_friend_request,accept_friend_request,cancel_friend_request,UpdatePasswordView,comments_view
 # from django_rest_passwordreset.urls import add_reset_password_urls_to_router
-from django_rest_passwordreset.views import *
+# from django_rest_passwordreset.views import *
 
 
 router = routers.DefaultRouter()
 router.register('signup', SignupViewSet),
-router.register(
-    'validate_token',
-    ResetPasswordValidateTokenViewSet,
-    basename='reset-password-validate'
-)
-router.register(
-    'passwordreset/confirm',
-    ResetPasswordConfirmViewSet,
-    basename='reset-password-confirm'
-)
-router.register(
-    'passwordreset',
-    ResetPasswordRequestTokenViewSet,
-    basename='reset-password-request'
-)
+# router.register(
+#     'validate_token',
+#     ResetPasswordValidateTokenViewSet,
+#     basename='reset-password-validate'
+# )
+# router.register(
+#     'passwordreset/confirm',
+#     ResetPasswordConfirmViewSet,
+#     basename='reset-password-confirm'
+# )
+# router.register(
+#     'passwordreset',
+#     ResetPasswordRequestTokenViewSet,
+#     basename='reset-password-request'
+# )
 
 
 
