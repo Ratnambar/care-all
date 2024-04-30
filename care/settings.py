@@ -43,9 +43,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework.authtoken',
+    'django_rest_passwordreset',
     'django_extensions',
     'accounts',
-    # 'django_rest_passwordreset',
 ]
 
 MIDDLEWARE = [
@@ -134,9 +134,8 @@ STATIC_URL = '/static/'
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
+# DJANGO_REST_LOOKUP_FIELD = 'custom_email_field'
 REST_FRAMEWORK = {
-
 'DEFAULT_AUTHENTICATION_CLASSES':[
     'rest_framework.authentication.TokenAuthentication',
     ]
@@ -157,11 +156,15 @@ SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
 
+REST_FRAMEWORK = {
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
+    'PAGE_SIZE': 2
+}
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_USE_TLS = False
 EMAIL_PORT = 465
 EMAIL_USE_SSL = True
-EMAIL_HOST_USER = 'cvctest51@gmail.com'
-EMAIL_HOST_PASSWORD = 'foutrqtasjjdgehv'
+EMAIL_HOST_USER = ''
+EMAIL_HOST_PASSWORD = ''
