@@ -208,8 +208,9 @@ def comments_view(request,comment_to_userID):
 		parent = Comments.objects.get(sno=parent_sno)
 		comments_data = {
 			'comment_from_user':comment_from_user,'comment_to_user':comment_to_user.id,
-			'comment':request.data.get('comment'),'parent':parent
+			'comment':request.data.get('comment'),'parent':parent.sno
 		}
+		print("reply ", comments_data)
 	serializer = CommentSerializer(data=comments_data)
 	if serializer.is_valid():
 		serializer.save()
