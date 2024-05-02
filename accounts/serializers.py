@@ -1,12 +1,11 @@
 from django.contrib.auth import get_user_model
 from django.db import models
-from django.db.models import fields
+from django.db.models import fields, Count
 from django.http import request
 from rest_framework import serializers
-from accounts.models import Comments, Profile
+from accounts.models import Comments, Profile, Rating
 from django.contrib.auth.password_validation import validate_password
 from rest_framework.serializers import ModelSerializer, Serializer
-
 
 
 class SignupSerializer(ModelSerializer):
@@ -26,10 +25,6 @@ class SignupSerializer(ModelSerializer):
 			raise serializers.ValidationError({"message":"Password length should be greater than 8 characters."})
 		return super().validate(attrs)
 
-	# def validate_password(self,value):
-	# 	validate_password(value)
-	# 	return value
-
 	def create(self,validate_data):
 		user = get_user_model()(**validate_data)
 		user.set_password(validate_data['password'])
@@ -42,8 +37,6 @@ class LoginSerializer(Serializer):
 	password = serializers.CharField(required=True)
 
 
-
-
 class ForgotPasswordSerializer(Serializer):
 	old_password = serializers.CharField(required=True)
 	new_password = serializers.CharField(required=True)
@@ -51,14 +44,6 @@ class ForgotPasswordSerializer(Serializer):
 
 class ResetPasswordEmailSerializer(Serializer):
 	email = serializers.EmailField(required=True)
-
-
-	# def validate_password(self, validated_data):
-	# 	password1 = validated_data['password1']
-	# 	password2 = validated_data['password2']
-	# 	if password1 != password2:
-
-
 
 
 class UserProfileSerializer(ModelSerializer):
@@ -69,9 +54,14 @@ class UserProfileSerializer(ModelSerializer):
 
 class UserSerializer(ModelSerializer):
 	profile = UserProfileSerializer(many=True)
+	total_rating = serializers.SerializerMethodField()
+
 	class Meta:
 		model = get_user_model()
-		fields = ['id','username','email','profile','care_taker','friends']
+		fields = ['id','username','email','profile','care_taker','friends','total_rating']
+
+	def get_total_rating(self, obj):
+		return obj.received_ratings.aggregate(total_rating=Count('rating'))['total_rating'] or 0
 
 
 class ChangePasswordSerializer(serializers.Serializer):
@@ -86,3 +76,12 @@ class CommentSerializer(ModelSerializer):
 	
 	def create(self, validated_data):
 		return Comments.objects.create(**validated_data)
+	
+
+class RatingSerializer(serializers.ModelSerializer):
+	class Meta:
+		model = Rating
+		fields = ('user', 'rated_user', 'rating', 'created_at')
+	
+	def create(self, validated_data):
+		return Rating.objects.create(**validated_data)

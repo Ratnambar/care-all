@@ -2,9 +2,10 @@ from rest_framework.authtoken.models import Token
 from rest_framework import mixins, viewsets
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import AllowAny, IsAuthenticated
-from accounts.models import Friend_Request, MyUser, Profile, Comments
+from accounts.models import Friend_Request, MyUser, Profile, Comments, Rating
 from accounts.serializers import SignupSerializer, LoginSerializer,UserSerializer,UserProfileSerializer \
-	,ForgotPasswordSerializer,ResetPasswordEmailSerializer,ChangePasswordSerializer,CommentSerializer
+	,ForgotPasswordSerializer,ResetPasswordEmailSerializer,ChangePasswordSerializer,CommentSerializer\
+	,RatingSerializer
 from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
 from rest_framework import generics
@@ -15,12 +16,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from django.core.mail import send_mail
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
-
-
-
-
-# global otp
-# otp = random.randint(1000, 9999)
+from django.db.models import Sum, Count
 
 
 
@@ -31,7 +27,6 @@ def verify_email(email):
 		return False
 	else:
 		return True
-
 
 def send_email(email):
 	if verify_email(email):
@@ -48,20 +43,7 @@ def send_email(email):
 		else:
 			return Response({"message": "Email sent. !"})
 	return Response({"message": "Email is not registered."})
-	
 
-# def send_otp(email, otp):
-# 	try:
-# 		send_mail(
-# 			"Registration on my website.",
-# 			f"<p>Your OTP for forgot password is : {globals()['otp']}</p>",
-# 			"cvctest51@gmail.com",
-# 			[email],
-# 			fail_silently=False,
-# 		)
-# 	except:
-# 		return Response({"message": "email couldn't send."})
-	
 
 # Signup view
 class SignupViewSet(mixins.CreateModelMixin,viewsets.GenericViewSet):
@@ -72,7 +54,6 @@ class SignupViewSet(mixins.CreateModelMixin,viewsets.GenericViewSet):
 
 	def create(self, request, *args, **kwargs):
 		try:
-			
 			MyUser.objects.get(email=request.POST.get('email'))
 		except:
 			serializer = SignupSerializer(data=request.data)
@@ -99,11 +80,14 @@ class UserView(generics.ListAPIView):
 	serializer_class = UserSerializer
 
 	def list(self, request):
-		print(request.user.care_taker)
 		if request.user.care_taker:
-			users = MyUser.objects.exclude(care_taker=True).exclude(username='admin') # type: ignore
+			users = MyUser.objects.exclude(care_taker=True).exclude(username='admin')\
+				 .annotate(total_rating=Count('received_ratings__rating')) # type: ignore
 		else:
-			users = MyUser.objects.exclude(care_taker=False).exclude(username='admin')
+			users = MyUser.objects.exclude(care_taker=False).exclude(username='admin')\
+				.annotate(total_rating=Count('received_ratings__rating'))
+		# users_rating = users.annotate(total_rating=Sum('received_ratings__rating'))
+		# print('User rating ',users[0].__dict__)
 		serializer = UserSerializer(users, many=True)
 		return Response({'current_user': serializer.data})
 
@@ -136,9 +120,7 @@ class LoginView(APIView):
 def send_friend_request(request,userID):
 	from_user = request.user
 	from_user_details = MyUser.objects.get(id=request.user.id)
-	print(from_user)
 	to_user = MyUser.objects.get(id=userID)
-	print(to_user)
 	if from_user == to_user:
 		return Response("you can't send request to yourself.")
 	else:
@@ -154,65 +136,6 @@ def send_friend_request(request,userID):
 			else:
 				return Response({'message':'Friend request has already sent.'})
 
-
-@api_view(['POST'])
-@permission_classes([AllowAny])
-def user_signup(request):
-	user = request.data
-	email = request.data.get('email')
-	print(email)
-	try:
-		email = MyUser.objects.get(email=request.data.get('email'))
-	except Exception:
-		serializer = SignupSerializer(data=request.data)
-		if serializer.is_valid():
-			send_email(request.data.get('email'))
-			serializer.save()
-			return Response({"message": "user created successfully."})
-		return Response({"message": serializer.errors})
-	return Response({"message":"Email is already registered."})
-
-
-# @api_view(['POST'])
-# @authentication_classes([TokenAuthentication])
-# @permission_classes([IsAuthenticated])
-# def forgot_password(request):
-# 	serializer = ForgotPasswordSerializer(data=request.data)
-# 	if serializer.is_valid():
-# 		user = request.user
-# 		if user.check_password(serializer.data.get('old_password')):
-# 			user.set_password(serializer.data.get('new_password'))
-# 			user.save()
-# 			update_session_auth_hash(request, user)
-# 			return Response({"message": "Password changed successfully."})
-# 		return Response({"message": "Incorrect old password."})
-# 	return Response({"message": serializer.errors})
-	# print(request.user, request.data.get('email'))
-	# user = request.user
-	# email = request.data.get('email')
-	# token = Token.objects.get(user=user)
-	# if token:
-	# 	send_email(email)
-	# 	return Response({"message": "Password reset link has been sent to your email."})
-	# return Response({"message": "Token not found."})
-# 	try:
-# 		fetch_email = MyUser.objects.get(email=request.data.get('email'))
-# 	except Exception:
-# 		return Response({"message": "This email not found.Please enter registered email address."})
-# 	else:
-# 		# print(request.user)
-# 		token = Token.objects.filter(user=request.user.id).first()
-		
-# 		return Response({"message": "Okay"})
-		# send_email(request.data.get('email'), globals()['otp'])
-
-
-# @api_view(['POST'])
-# def verify_otp(request):
-# 	if int(request.data.get('otp')) == int(globals()['otp']):
-# 		return Response({"message": "otp verified."})
-# 	return Response({"message": "otp not verified."})
-            
 
 # Request accept view.
 @api_view(['POST'])
@@ -287,11 +210,30 @@ def comments_view(request,comment_to_userID):
 			'comment_from_user':comment_from_user,'comment_to_user':comment_to_user.id,
 			'comment':request.data.get('comment'),'parent':parent
 		}
-	# print(comments_data)
 	serializer = CommentSerializer(data=comments_data)
-	# print(serializer)
 	if serializer.is_valid():
-		# print(serializer)
 		serializer.save()
 		return Response({'message':"Your reply has been send successfully."})
 	return Response({"message":"Your reply could not be sent."})
+
+
+@api_view(['POST'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
+def give_rating(request, rated_userID):
+	rated_user = MyUser.objects.get(id=rated_userID)
+	rating = request.data.get('rating')
+	if request.user.id == rated_user.id:
+		return Response({"message":"You can't give rating to yourself."})
+	if rating < 0 or rating > 4:
+		return Response({"message":"Rating should be between 0 to 4"})
+	if Rating.objects.filter(user=request.user, rated_user=rated_user).exists():
+		return Response({"message":"You have already given a rating to this user."})
+	data = {
+		'user':request.user.id, 'rated_user':rated_user.id, 'rating':rating
+	}
+	serializer = RatingSerializer(data=data)
+	if serializer.is_valid():
+		serializer.save()
+		return Response({"message":"Rating has been given successfully."})
+	return Response({"message":"Your rating couldn't save."})

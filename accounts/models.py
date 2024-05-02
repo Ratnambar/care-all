@@ -10,7 +10,6 @@ from django.utils.timezone import now
 # Create your models here.
 
 class MyUser(AbstractUser):
-    
     care_taker = models.BooleanField(default=False)
     friends = models.ManyToManyField('self',blank=True, related_name="friends")
    
@@ -25,13 +24,11 @@ class CareSeeker(models.Model):
     	return self.user.username
 
 
-
 class CareTaker(models.Model):
     id = models.IntegerField(primary_key=True)
     user = models.ForeignKey(MyUser, on_delete=models.CASCADE,related_name="caretaker")
     # profile = models.ForeignKey(Profile, on_delete=models.CASCADE)
     available_places = models.PositiveSmallIntegerField(default='0')
-
 
     def __str__(self):
     	return self.user.username
@@ -42,7 +39,6 @@ class Profile(models.Model):
         ("M", "Male"),
         ("F", "Female"),
     ]
-
     user = models.ForeignKey(MyUser, on_delete=models.CASCADE, related_name="profile")
     first_name = models.CharField(max_length=50,blank=True, null=True)
     last_name = models.CharField(max_length=50,blank=True, null=True)
@@ -51,18 +47,16 @@ class Profile(models.Model):
     contact = models.CharField(max_length=12,blank=True, help_text='Contact phone number')
     bio = models.CharField(max_length=500, blank=True)
     address = models.CharField(max_length=100, blank=True)
-    # profilepic = models.ImageField(upload_to="profile/", db_index=True, default="profile/default.jpg")
+    profilepic = models.ImageField(upload_to="profile/", db_index=True, default="profile/default.jpg")
     
-
-    # def __str__(self):
-    #     return self.user.username
+    def __str__(self):
+        return self.user.username
 
 
 class Friend_Request(models.Model):
     from_user = models.ForeignKey(MyUser, related_name='from_user', on_delete=models.CASCADE)
     to_user = models.ForeignKey(MyUser, related_name='to_user', on_delete=models.CASCADE)
     send_request = models.DateTimeField(default=now, editable=False)
-
 
     # def __str__(self):
     #     return self.from_user.username+" to "+self.to_user.username+" time "+str(self.send_request)
@@ -75,3 +69,13 @@ class Comments(models.Model):
 	comment_to_user = models.ForeignKey(MyUser, on_delete=models.CASCADE,related_name="comment_to_user")
 	parent = models.ForeignKey('self',on_delete=models.CASCADE, null=True)
 	timestamp = models.DateTimeField(default=now)
+
+
+class Rating(models.Model):
+    user = models.ForeignKey(MyUser, on_delete=models.CASCADE, related_name="given_ratings")
+    rated_user = models.ForeignKey(MyUser, on_delete=models.CASCADE, related_name="received_ratings")
+    rating = models.IntegerField()
+    created_at = models.DateTimeField(default=now)
+
+    class Meta:
+        unique_together = ("user", "rated_user")
