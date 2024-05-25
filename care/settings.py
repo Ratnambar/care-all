@@ -143,6 +143,8 @@ REST_FRAMEWORK = {
     ]
 }
 
+SESSION_ENGINE = 'django.contrib.sessions.backends.db'
+
 DJANGO_REST_PASSWORDRESET_TOKEN_CONFIG = {
     "CLASS": "django_rest_passwordreset.tokens.RandomStringTokenGenerator",
     "OPTIONS": {
