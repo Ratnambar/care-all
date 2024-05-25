@@ -8,6 +8,8 @@ from accounts.serializers import SignupSerializer, LoginSerializer,UserSerialize
 	,RatingSerializer
 from rest_framework.authtoken.models import Token
 from rest_framework.response import Response
+# from django.http import HttpResponse, HttpResponseRedirect
+from django.shortcuts import reverse, redirect
 from rest_framework import generics
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.views import APIView
@@ -97,6 +99,7 @@ class LoginView(APIView):
 	permission_classes = [AllowAny]
 
 	def post(self,request):  # sourcery skip: raise-from-previous-error
+		response = {}
 		serializer = LoginSerializer(data=request.data)
 		if serializer.is_valid():
 			try:
@@ -106,10 +109,23 @@ class LoginView(APIView):
 			if user:
 				if user.check_password(serializer.data['password']):
 					token = Token.objects.get(user=user)
-					return Response({'token':str(token)})
+					if token:
+						response = Response()
+						response.set_cookie('token',str(token))
+						
+					return response
 				return Response({"message":"incorrect password."})
 			return Response({"message":"User does not exist."})
 		return Response({'message':serializer.errors})
+
+@api_view(['GET'])
+# @authentication_classes([TokenAuthentication])
+# @permission_classes([IsAuthenticated])
+def logout(request):
+	# cookie_name = request.COOKIES.get('token')
+	response = redirect('login_view')
+	response.delete_cookie('token')
+	return response
 
 
 # view for sending request.We are using id of the user to whom request
