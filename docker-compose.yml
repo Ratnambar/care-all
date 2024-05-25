@@ -1,0 +1,29 @@
+version: '3.7'
+
+services:
+  sqlite3:
+    image: nouchka/sqlite3:latest
+    stdin_open: true
+    volumes:
+      - ./db.sqlite3:/code/db/
+
+  web:
+    build: .
+    command: bash -c "python manage.py makemigrations && python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+    # command: python3 manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/careall
+    ports:
+      - "8000:8000"
+
+# services:
+#   django_gunicorn:
+#   # web:
+#   # restart: always
+#     build: .
+#     command: bash -c "python manage.py makemigrations && python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+#     container_name: careall
+#     volumes:
+#       - .:/careall
+#     ports:
+#       - "8000:8000"
