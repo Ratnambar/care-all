@@ -112,15 +112,14 @@ class LoginView(APIView):
 					if token:
 						response = Response()
 						response.set_cookie('token',str(token))
-						
-					return response
+					return Response({'token': str(token)})
 				return Response({"message":"incorrect password."})
 			return Response({"message":"User does not exist."})
 		return Response({'message':serializer.errors})
 
-@api_view(['GET'])
-# @authentication_classes([TokenAuthentication])
-# @permission_classes([IsAuthenticated])
+@api_view(['POST'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
 def logout(request):
 	# cookie_name = request.COOKIES.get('token')
 	response = redirect('login_view')

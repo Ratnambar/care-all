@@ -47,7 +47,7 @@ class Profile(models.Model):
     contact = models.CharField(max_length=12,blank=True, help_text='Contact phone number')
     bio = models.CharField(max_length=500, blank=True)
     address = models.CharField(max_length=100, blank=True)
-    profilepic = models.ImageField(upload_to="profile/", db_index=True, default="profile/default.jpg")
+    # profilepic = models.ImageField(upload_to="profile/", db_index=True, default="profile/default.jpg")
     
     def __str__(self):
         return self.user.username

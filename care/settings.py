@@ -43,7 +43,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework.authtoken',
-    'django_rest_passwordreset',
     'django_extensions',
     'accounts',
 ]
@@ -143,13 +142,13 @@ REST_FRAMEWORK = {
     ]
 }
 
-DJANGO_REST_PASSWORDRESET_TOKEN_CONFIG = {
-    "CLASS": "django_rest_passwordreset.tokens.RandomStringTokenGenerator",
-    "OPTIONS": {
-        "min_length": 20,
-        "max_length": 30
-    }
-}
+# DJANGO_REST_PASSWORDRESET_TOKEN_CONFIG = {
+#     "CLASS": "django_rest_passwordreset.tokens.RandomStringTokenGenerator",
+#     "OPTIONS": {
+#         "min_length": 20,
+#         "max_length": 30
+#     }
+# }
 
 
 SIMPLE_JWT = {
