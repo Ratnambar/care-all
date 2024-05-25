@@ -19,6 +19,7 @@ from rest_framework import status
 from django.core.mail import send_mail
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.db.models import Sum, Count
+from django.contrib.sessions.models import Session
 
 
 
@@ -52,7 +53,6 @@ class SignupViewSet(mixins.CreateModelMixin,viewsets.GenericViewSet):
 	queryset = MyUser.objects.all()
 	serializer_class = SignupSerializer
 	permission_classes = [AllowAny]
-
 
 	def create(self, request, *args, **kwargs):
 		try:
@@ -90,6 +90,7 @@ class UserView(generics.ListAPIView):
 				.annotate(total_rating=Count('received_ratings__rating'))
 		# users_rating = users.annotate(total_rating=Sum('received_ratings__rating'))
 		# print('User rating ',users[0].__dict__)
+		print("session value is : ",request.session['user'])
 		serializer = UserSerializer(users, many=True)
 		return Response({'current_user': serializer.data})
 
@@ -112,19 +113,25 @@ class LoginView(APIView):
 					if token:
 						response = Response()
 						response.set_cookie('token',str(token))
-						
-					return response
+						request.session['user'] = str(token)
+					return Response({'token': str(token)})
 				return Response({"message":"incorrect password."})
 			return Response({"message":"User does not exist."})
 		return Response({'message':serializer.errors})
 
-@api_view(['GET'])
-# @authentication_classes([TokenAuthentication])
-# @permission_classes([IsAuthenticated])
+
+@api_view(['POST'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([IsAuthenticated])
 def logout(request):
-	# cookie_name = request.COOKIES.get('token')
+	cookie_name = request.COOKIES.get('token')
+	session_name = request.session['user']
+	# print("Cookie name is :",cookie_name)
+	# print("Session name is :",session_name)
+	# print(request.session['user'])
 	response = redirect('login_view')
 	response.delete_cookie('token')
+	del session_name
 	return response
 
 
